@@ -3,6 +3,7 @@
 #include <linux/sched/sysctl.h>
 #include <linux/sched/rt.h>
 #include <linux/mutex.h>
+#include <linux/sched/wrr.h>
 #include <linux/spinlock.h>
 #include <linux/stop_machine.h>
 #include <linux/tick.h>
@@ -79,6 +80,11 @@ static inline int rt_policy(int policy)
 	return 0;
 }
 
+static inline int task_has_wrr_policy(struct task_struct *p)
+{
+	return wrr_policy(p->policy);
+}
+
 static inline int task_has_rt_policy(struct task_struct *p)
 {
 	return rt_policy(p->policy);
@@ -108,7 +114,7 @@ extern struct mutex sched_domains_mutex;
 
 struct cfs_rq;
 struct rt_rq;
-
+struct wrr_rq;
 extern struct list_head task_groups;
 
 struct cfs_bandwidth {
@@ -324,6 +330,12 @@ static inline int rt_bandwidth_enabled(void)
 {
 	return sysctl_sched_rt_runtime >= 0;
 }
+struct wrr_rq{
+	int total_weight;
+	int nr_running;
+	struct load_weight load;
+	struct list_head queue;
+};
 
 /* Real-Time classes' related field in a runqueue: */
 struct rt_rq {
@@ -1027,6 +1039,7 @@ struct sched_class {
 extern const struct sched_class stop_sched_class;
 extern const struct sched_class rt_sched_class;
 extern const struct sched_class fair_sched_class;
+extern const struct sched_class sched_wrr_class;
 extern const struct sched_class idle_sched_class;
 
 
@@ -1323,7 +1336,8 @@ extern struct sched_entity *__pick_first_entity(struct cfs_rq *cfs_rq);
 extern struct sched_entity *__pick_last_entity(struct cfs_rq *cfs_rq);
 extern void print_cfs_stats(struct seq_file *m, int cpu);
 extern void print_rt_stats(struct seq_file *m, int cpu);
-
+extern void init_wrr_rq(struct wrr_rq *rt_rq, struct rq *rq);
+extern void set_wrr_weight(int weight);
 extern void init_cfs_rq(struct cfs_rq *cfs_rq);
 extern void init_rt_rq(struct rt_rq *rt_rq, struct rq *rq);
 
