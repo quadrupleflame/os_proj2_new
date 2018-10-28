@@ -72,7 +72,12 @@ extern __read_mostly int scheduler_running;
  * single value that denotes runtime == period, ie unlimited time.
  */
 #define RUNTIME_INF	((u64)~0ULL)
-
+static inline int wrr_policy(int policy)
+{
+	if(policy == SCHED_WRR)
+		return 1;
+	return 0;
+}
 static inline int rt_policy(int policy)
 {
 	if (policy == SCHED_FIFO || policy == SCHED_RR)
@@ -434,7 +439,7 @@ struct rq {
 
 	struct cfs_rq cfs;
 	struct rt_rq rt;
-
+	struct wrr_rq wrr;
 #ifdef CONFIG_FAIR_GROUP_SCHED
 	/* list of leaf cfs_rq on this cpu: */
 	struct list_head leaf_cfs_rq_list;
