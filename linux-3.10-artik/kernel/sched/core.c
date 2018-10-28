@@ -90,6 +90,16 @@
 #define CREATE_TRACE_POINTS
 #include <trace/events/sched.h>
 
+#define WRR_TIMESLICE 10
+#define MAX_WRR_WEIGHT 10
+#define MAX_CPUS 8
+
+struct wrr_info {
+	int num_cpus;
+	int nr_running[MAX_CPUS];
+	int total_weight[MAX_CPUS];
+};
+
 void start_bandwidth_timer(struct hrtimer *period_timer, ktime_t period)
 {
 	unsigned long delta;
@@ -8154,7 +8164,7 @@ struct cgroup_subsys cpu_cgroup_subsys = {
 
 #endif	/* CONFIG_CGROUP_SCHED */
 
-void dump_cpu_task(int cpu)
+void dump_cpu_task(int cpu)	
 {
 	pr_info("Task dump for CPU %d:\n", cpu);
 	sched_show_task(cpu_curr(cpu));
@@ -8169,8 +8179,8 @@ SYSCALL_DEFINE1(get_wrr_info, struct wrr_info *, info)
 	for_each_possible_cpu(cpu) {
 		struct rq *rq;
 		rq = cpu_rq(cpu);
-		wrr_info.nr_running[cpu] = rq->wrr.nr_running;
-		wrr_info.total_weight[cpu] = rq->wrr.total_weight;
+		ret_info.nr_running[cpu] = rq->wrr.nr_running;
+		ret_info.total_weight[cpu] = rq->wrr.total_weight;
 		cpus++;
 	}
 	ret_info.num_cpus = cpus;
@@ -8183,7 +8193,7 @@ static int is_root(void)
 	return current_cred()->uid == 0;
 }
 
-SYSCALL_DEFINE1(set_wrr_info, int, boosted_weight)
+SYSCALL_DEFINE1(set_wrr_weight, int, boosted_weight)
 {
 	if (!is_root())
 		return -EPERM;

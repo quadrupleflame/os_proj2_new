@@ -3,6 +3,7 @@
  */
 
 #include "sched.h"
+#include "wrr.h"
 
 int wrr_weight = MAX_WRR_WEIGHT;
 

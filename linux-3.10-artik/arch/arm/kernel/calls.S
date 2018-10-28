@@ -389,7 +389,7 @@
 		CALL(sys_process_vm_writev)
 		CALL(sys_kcmp)
 		CALL(sys_finit_module)
-/* 380 */       CALL(sys_get_wrr_info)
+/* 380 */   CALL(sys_get_wrr_info)
 		CALL(sys_set_wrr_weight)
 #ifndef syscalls_counted
 .equ syscalls_padding, ((NR_syscalls + 3) & ~3) - NR_syscalls
