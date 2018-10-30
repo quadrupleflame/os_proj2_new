@@ -242,7 +242,7 @@ static void graph_test(mpz_t number)
 {
 	double run_time = 0;
 	int i = 0;
-	FILE *file = fopen("/data/misc/results.txt", "w");
+	FILE *file = fopen("results.txt", "w");
 	for (i = MIN_WEIGHT; i <= MAX_WEIGHT; i++) {
 		set_weight(0, i);
 		printf("Graph Test: Weight = %d\n", i);
@@ -291,7 +291,7 @@ static void test(mpz_t number, const char *weight_string)
 	print_scheduler();
 	/* ret = fork();
 	if (ret < 0)
-		printf("ERRROR!!!!\n");
+		printf("ERRROR!!!!\n");f
 	else {
 		if(ret == 0)
 			printf("CHILD\n");
