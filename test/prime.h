@@ -1,9 +1,6 @@
 static inline int verify_is_prime(mpz_t num)
 {
-	mpz_t i;
-	mpz_t sqrt;
-	mpz_t one;
-	mpz_t two;
+	mpz_t i, sqrt, one, two;
 
 	mpz_init_set_str(one, "1", 10);
 	mpz_init_set_str(two, "2", 10);
