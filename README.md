@@ -29,7 +29,8 @@ $ sdb pull /root/results.txt results
   1. register system call sched_getweight, sched_setweight
   2. init_task.h, kernel/kthread.c 을 통해 기본 스케줄려를 SCHED_WRR로 바꿈.
   3. wrr.c을 통해 scheduler를 구현하고 makefile에 등록함.
-  4. use a test investigate implement. finally in debug device result file is stored. results.txt파일에 저장됩니다.
+  4. sched.h를 통해 wrr_scheduler를 위한 구조체를 형성 및 선언.  
+  5. use a test investigate implement. finally in debug device result file is stored. results.txt파일에 저장됩니다.
 
 ## Investigate
 
