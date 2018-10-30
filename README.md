@@ -15,10 +15,16 @@ $ sdb push test /root/test
 ```
 
 in debug console
+```sh
 $ direct_set_debug.sh --sdb-set
+```
+```sh
 $ ./test <number> <weight>  weight for 1 to 20
+```
   eg> ./test 1000001 1
+```sh
 $ sdb pull /root/results.txt results
+```
 ## High-Level Design & implementation
   1. register system call sched_getweight, sched_setweight
   2. init_task.h, kernel/kthread.c 을 통해 기본 스케줄려를 SCHED_WRR로 바꿈.
