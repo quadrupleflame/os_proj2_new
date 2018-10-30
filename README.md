@@ -4,21 +4,61 @@
 $ ./build
 
 to build the test code, type
+```sh
 $ arm-linux-gnueabi-gcc -I /include test.c -o test
+```
+```sh
 $ sdb root on
+```
+```sh
 $ sdb push test /root/test
+```
 
 in debug console
+```sh
 $ direct_set_debug.sh --sdb-set
-$ /root/test
-
+```
+```sh
+$ ./test <number> <weight>  weight for 1 to 20
+```
+  eg> ./test 1000001 1
+```sh
+$ sdb pull /root/results.txt results
+```
 ## High-Level Design & implementation
   1. register system call sched_getweight, sched_setweight
   2. init_task.h, kernel/kthread.c 을 통해 기본 스케줄려를 SCHED_WRR로 바꿈.
   3. wrr.c을 통해 scheduler를 구현하고 makefile에 등록함.
-  4. use a test investigate implement.
+  4. sched.h를 통해 wrr_scheduler를 위한 구조체를 형성 및 선언.  
+  5. use a test investigate implement. finally in debug device result file is stored. results.txt파일에 저장됩니다.
 
 ## Investigate
+
+Number = 1000001
+weight, execute time  
+1,0.706776
+2,0.696349
+3,0.696559
+4,0.694756
+5,0.705340
+6,0.695877
+7,0.696914
+8,0.705821
+9,0.695844
+10,0.700756
+11,0.711483
+12,0.705468
+13,0.695812
+14,0.704239
+15,0.705817
+16,0.704742
+17,0.695261
+18,0.705653
+19,0.704964
+20,0.695133
+
+Can see graph in plot.pdf
+  원래 이 숫자들은 weight가 증가함에 따라, execution time은 감소해야한다. 하지만 현재 결과값은 그런 사실을 보여주지 못하고있다. 다양한 측면에서 이유를 찾아봤지만 특별한 이유가 보이지 않았다. 특히 time slice가 정확히 setting되어있기 때문에 이를 WRR자체의 문제라기보다 다른 setting문제라고 생각된다. 
 
 ## Improve the WRR scheduler
 
