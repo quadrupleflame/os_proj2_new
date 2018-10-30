@@ -20,15 +20,16 @@ int main(int argc, char **argv)
 
 	if (argc == 1) {
 		while(1) {
-			syscall(244, &info);
+			syscall(380, &info);
 			for(j = 0; j < info.num_cpus; j++)
 				printf("CPU %d has %d processes with total weight %d\n",
 				       j, (int)info.nr_running[j], (int)info.total_weight[j]);
+			printf("\n");
 			sleep(1);
 		}
 	} else {
 		j = atoi(argv[1]);
-		syscall(245, j);
+		syscall(381, j);
 	}
 	return 0;
 }

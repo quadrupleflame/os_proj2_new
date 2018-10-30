@@ -1,38 +1,40 @@
-TARGET=test
-SOURCES=test.c
+CROSS_COMPILE = arm-linux-gnueabi-
+CC := $(CROSS_COMPILE)gcc
+LD := $(CROSS_COMPILE)ld
+CFLAGS := -Wall -Werror -g -I../tools/gmp/include
+INCLUDE = -I. -I../linux-3.10-artik/usr/include -I../linux-3.10-artik/include -I../linux-3.10-artik/arch/arm/include
+LDFLAGS := -L../tools/gmp/lib -lgmp -lm -static $(INCLUDE)
 
-# You probably don't need to change below
 
-OBJECTS=$(SOURCES:%.c=%.o)
+all: test infinite
 
-BRANCH=$(shell git rev-parse --abbrev-ref HEAD)
-OBJDIR=../../build-$(BRANCH)/$(shell basename $(CURDIR))
-SYSROOT=--sysroot=../sysroot
+test: test_prime.c
+	$(CC) -o $@ $< $(CFLAGS) $(LDFLAGS)
 
-CC=aarch64-linux-android-gcc
+infinite: infinite_loop.c
+	$(CC) -o $@ $< $(CFLAGS) $(LDFLAGS)
 
-INCLUDE=
-
-LDLIBS=-L../sysroot/lib64
-
-CFLAGS=-Wall  -g -pie  -fdata-sections -ffunction-sections $(SYSROOT) $(INCLUDE)
-LDFLAGS=$(SYSROOT) -pie
-
-TARGET:=$(addprefix $(OBJDIR)/,$(TARGET))
-OBJECTS:=$(addprefix $(OBJDIR)/,$(OBJECTS))
-
-.PHONY: default clean
-
-default: $(OBJDIR) $(TARGET)
-
-$(OBJDIR):
-	mkdir -p $(OBJDIR)
-
-$(OBJDIR)/%.o: %.c
-	$(CC) -c $(CFLAGS) $< -o $@
-
-$(TARGET): $(OBJECTS)
-	$(CC) $(LDFLAGS) $^ -o $@ $(LDLIBS)
 
 clean:
-	rm -rf $(OBJDIR)
+	rm -f test.o test
+
+.PHONY: clean
+
+
+# -------------------------------------------------------------------------
+#  Installation targets below this line
+
+TARGET_DIR = /data/misc
+
+%_emu: ADB_OPT = -e
+%_emu: ADB_TGT = Android Emulator
+%_dev: ADB_OPT = -d
+%_dev: ADB_TGT = Android Device
+
+install_%: $(all)
+	@echo [INSTALL] moving test binaries to $(ADB_TGT) [$(TARGET_DIR)]...
+	@adb $(ADB_OPT) remount
+	@adb $(ADB_OPT) push test $(TARGET_DIR)
+	@adb $(ADB_OPT) push infinite $(TARGET_DIR)
+	@adb $(ADB_OPT) shell chmod 6755 $(TARGET_DIR)/test
+	@adb $(ADB_OPT) shell chmod 6755 $(TARGET_DIR)/infinite
