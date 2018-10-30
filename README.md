@@ -12,13 +12,13 @@ in debug console
 $ direct_set_debug.sh --sdb-set
 $ /root/test
 
-##High-Level Design & implementation
+## High-Level Design & implementation
   1. register system call sched_getweight, sched_setweight
   2. init_task.h, kernel/kthread.c 을 통해 기본 스케줄려를 SCHED_WRR로 바꿈.
   3. wrr.c을 통해 scheduler를 구현하고 makefile에 등록함.
   4. use a test investigate implement.
   
-##Lessons Learned
+## Lessons Learned
 * custom scheduler를 구현하는 방법을 알게되었다.
 * test파일을 작성하면서 prime factorization naive tiral division method에 대해 알게되었다.
 
