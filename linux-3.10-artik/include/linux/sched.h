@@ -1057,8 +1057,10 @@ struct sched_rt_entity {
 struct sched_wrr_entity{
 	unsigned int time_slice;
 	unsigned int weight;
-	struct list_head run_list;
+	unsigned int time_left;
 	int was_boosted;
+	struct list_head run_list;
+	struct task_struct *task;
 };
 
 struct rcu_node;

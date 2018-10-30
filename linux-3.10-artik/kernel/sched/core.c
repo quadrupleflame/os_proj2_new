@@ -86,6 +86,7 @@
 #include "sched.h"
 #include "../workqueue_internal.h"
 #include "../smpboot.h"
+#include "wrr.h"
 
 #define CREATE_TRACE_POINTS
 #include <trace/events/sched.h>
@@ -93,12 +94,6 @@
 #define WRR_TIMESLICE 10
 #define MAX_WRR_WEIGHT 10
 #define MAX_CPUS 8
-
-struct wrr_info {
-	int num_cpus;
-	int nr_running[MAX_CPUS];
-	int total_weight[MAX_CPUS];
-};
 
 void start_bandwidth_timer(struct hrtimer *period_timer, ktime_t period)
 {
@@ -8170,33 +8165,116 @@ void dump_cpu_task(int cpu)
 	sched_show_task(cpu_curr(cpu));
 }
 
-SYSCALL_DEFINE1(get_wrr_info, struct wrr_info *, info)
-{
-	int cpu;
-	struct wrr_info ret_info;
-	int cpus = 0;
-	int cpy_res = 0;
-	for_each_possible_cpu(cpu) {
-		struct rq *rq;
-		rq = cpu_rq(cpu);
-		ret_info.nr_running[cpu] = rq->wrr.nr_running;
-		ret_info.total_weight[cpu] = rq->wrr.total_weight;
-		cpus++;
+int valid_weight(int weight) {
+	if (weight >= 1 && weight <= 20) {
+		return 1;
 	}
-	ret_info.num_cpus = cpus;
-	cpy_res = copy_to_user(info, &ret_info, sizeof(struct wrr_info));
-	return cpy_res;
-}
-
-static int is_root(void)
-{
-	return current_cred()->uid == 0;
-}
-
-SYSCALL_DEFINE1(set_wrr_weight, int, boosted_weight)
-{
-	if (!is_root())
-		return -EPERM;
-	set_wrr_weight(boosted_weight);
 	return 0;
+}
+
+static void update_timings_after_wt_change(struct task_struct *p)
+{
+	struct rq *rq;
+	if (p == NULL)
+		return;
+
+	rq = task_rq(p);
+	if (rq->curr == p || current == p) {
+		/* Let Running Task Finish current time slice */
+		p->wrr.time_slice = p->wrr.weight * 10;
+	} else {
+		p->wrr.time_slice = p->wrr.weight * 10;
+		p->wrr.time_left = p->wrr.time_slice / 10;
+	}
+}
+
+SYSCALL_DEFINE2(sched_setweight, pid_t, pid, int, weight)
+{
+	struct task_struct *task = NULL;
+	struct pid *pid_struct = NULL;
+	struct rq *rq = NULL;
+	struct wrr_rq *wrr_rq = NULL;
+	int old_weight;
+
+	if (pid < 0)
+		return -EINVAL;
+	if (weight < 0 || !valid_weight(weight))
+		return -EINVAL;
+
+	/* If pid is zero, use the current running task */
+	if (pid == 0) {
+		task = current;
+	} else {
+		pid_struct = find_get_pid(pid);
+		if (pid_struct == NULL) /* Invalid / Non-existent PID  */
+			return -EINVAL;
+		task = get_pid_task(pid_struct, PIDTYPE_PID);
+	}
+
+	/* Another sanity check */
+	if (task == NULL)
+		return -EINVAL;
+
+	if (task->policy != SCHED_WRR)
+		return -EINVAL;
+
+
+	/* remember the old_weight */
+	old_weight = task->wrr.weight;
+
+	/*
+	 * Check if user is root.
+	 * Approach borrowed from HW3 solution.
+	 */
+	if (current_uid() != 0 && current_euid() != 0) { /* Normal user */
+		/* normal user can't change other's weights */
+		if (!check_same_owner(task))
+			return -EPERM;
+
+		/* Normal user can only reduce weight */
+		if (weight > task->wrr.weight)
+			return -EPERM;
+
+		task->wrr.weight =  weight;
+	} else { /* user is root */
+		/* anything goes ... */
+		task->wrr.weight = (unsigned int) weight;
+	}
+
+	/* Update the time slice computation */
+	update_timings_after_wt_change(task);
+
+	/* Update the total weight */
+	rq = task_rq(task);
+	wrr_rq = &rq->wrr;
+	wrr_rq->total_weight -= old_weight;
+	wrr_rq->total_weight += weight;
+
+	return 0;
+}
+
+SYSCALL_DEFINE1(sched_getweight, pid_t, pid)
+{
+	int result;
+	struct task_struct *task = NULL;
+	struct pid *pid_struct = NULL;
+
+	if (pid < 0)
+		return -EINVAL;
+
+	/* Return weight of current process if PID is 0 */
+	if (pid == 0)
+		return current->wrr.weight;
+
+	pid_struct = find_get_pid(pid);
+
+	if (pid_struct == NULL)/* Invalid / Non-existent PID  */
+		return -EINVAL;
+
+
+	task = get_pid_task(pid_struct, PIDTYPE_PID);
+
+	result = task->wrr.weight;
+
+	return result;
 }

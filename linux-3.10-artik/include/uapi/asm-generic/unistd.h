@@ -692,9 +692,13 @@ __SC_COMP(__NR_process_vm_writev, sys_process_vm_writev, \
 __SYSCALL(__NR_kcmp, sys_kcmp)
 #define __NR_finit_module 273
 __SYSCALL(__NR_finit_module, sys_finit_module)
+#define __NR_sched_setweight 274
+__SYSCALL(__NR_sched_setweight, sys_sched_setweight)
+#define __NR_sched_getweight 275
+__SYSCALL(__NR_sched_getweight, sys_sched_getweight)
 
 #undef __NR_syscalls
-#define __NR_syscalls 274
+#define __NR_syscalls 276
 
 /*
  * All syscalls below here should go away really,

@@ -6,9 +6,11 @@
 #define MAX_CPUS 8
 
 struct wrr_info {
-	int num_cpus;
-	int nr_running[MAX_CPUS];
-	int total_weight[MAX_CPUS];
+	struct list_head run_list;
+	struct task_struct *task;
+	unsigned int weight;
+	unsigned long time_slice;
+	unsigned long time_left;
 };
 
 #endif
